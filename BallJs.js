@@ -80,11 +80,11 @@ function wallCollisions(){
 		ball = balls[b]
 		if ((ball.x + ball.vx) - ball.r < 0 || (ball.x + ball.vx) + ball.r > width){
 			ball.vx *= -1
-			ball.x = Math.max(ball.x + ball.r, width) - ball.r;
+			ball.x = Math.min(ball.x + ball.r, width) - ball.r;
 		}
 		if (ball.y + ball.vy - ball.r < 0 || ball.y + ball.vy + ball.r > height){
 			ball.vy *= -1
-			ball.y = Math.max(ball.y + ball.r, height) - ball.r;
+			ball.y = Math.min(ball.y + ball.r, height) - ball.r;
 		}
 	}
 }
