@@ -41,7 +41,7 @@ function momentum(u1, u2, m1, m2){
 }
 
 function drawCircle(x, y, radius, color){
-	color = "#" + ("0" + (x / width + y / height) * 0x80).toString(16).substr(-2).repeat(3);
+	color = ("0" + (x / width + y / height) * 0x80).toString(16).substr(-2).repeat(3);
 	ctx.beginPath(x, y)
 	ctx.arc(x, y, radius, 0, Math.PI * 2)
 	ctx.strokeStyle = "black"
