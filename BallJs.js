@@ -2,8 +2,7 @@ cnvs = document.getElementById("cnvs")
 ctx = cnvs.getContext("2d")
 colors = [['#800000', '#8B0000', '#B22222', '#FF0000', '#FA8072', '#FF6347', '#FF7F50', '#FF4500', '#D2691E', '#F4A460', '#FF8C00', '#FFA500', '#B8860B', '#DAA520', '#FFD700', '#808000', '#FFFF00', '#9ACD32', '#ADFF2F', '#7FFF00', '#7CFC00', '#008000', '#00FF00', '#32CD32', '#00FF7F', '#00FA9A', '#40E0D0', '#20B2AA', '#8D1CC"', '#008080', '#008B8B', '#00FFFF', '#00FFFF', '#00CED1', '#00BFFF', '#1E90FF', '#4169E1', '#000080', '#00008B', '#0000CD', '#0000FF', '#8A2BE2', '#9932CC', '#9400D3', '#800080', '#8B008B', '#FF00FF', '#FF00FF', '#C71585', '#FF1493', '#F69B4"', '#DC143C', '#A52A2A', '#CD5C5C', '#BC8F8F', '#F08080', '#FFFAFA', '#FFE4E1', '#E9967A', '#FFA07A', '#A0522D', '#FFF5EE', '#8B4513', '#FFDAB9', '#CD853F', '#FAF0E6', '#FFE4C4', '#DEB887', '#D2B48C', '#FAEBD7', '#FFDEAD', '#FFEBCD', '#FFEFD5', '#FFE4B5', '#F5DEB3', '#FDF5E6', '#FFFAF0', '#FFF8DC', '#F0E68C', '#FFFACD', '#EEE8AA', '#BDB76B', '#F5F5DC', '#FAFAD2', '#FFFFE0', '#FFFFF0', '#6B8E23', '#556B2F', '#8FBC8F', '#006400', '#228B22', '#90EE90', '#98FB98', '#F0FFF0', '#2E8B57', '#3CB371', '#F5FFFA', '#66CDAA', '#7FFFD4', '#2F4F4F', '#AFEEEE', '#E0FFFF', '#F0FFFF', '#5F9EA0', '#B0E0E6', '#ADD8E6', '#87CEEB', '#87CEFA', '#4682B4', '#F0F8FF', '#708090', '#778899', '#B0C4DE', '#6495ED', '#E6E6FA', '#F8F8FF', '#191970', '#6A5ACD', '#483D8B', '#7B68EE', '#9370DB', '#4B0082', '#BA55D3', '#DDA0DD', '#EE82EE', '#D8BFD8', '#DA70D6', '#FFF0F5', '#DB7093', '#FFC0CB', '#FFB6C1', '#000000', '#696969', '#808080', '#A9A9A9', '#C0C0C0', '#D3D3D3', '#DCDCDC', '#F5F5F5', '#FFFFFF'], ['#838B8B', '#7A8B8B', '#C1CDCD', '#668B8B', '#B4CDCD', '#2F4F4F', '#2F4F4F', '#5F9F9F', '#C0D9D9', '#528B8B', '#E0EEEE', '#96CDCD', '#388E8E', '#79CDCD', '#D1EEEE', '#8FD8D8', '#66CCCC', '#ADEAEA', '#70DBDB', '#AEEEEE', '#AFEEEE', '#8DEEEE', '#37FDFC', '#008080', '#008B8B', '#00CDCD', '#00EEEE', '#00FFFF', '#00FFFF', '#97FFFF', '#BBFFFF', '#E0FFFF', '#F0FFFF', '#00CED1', '#5F9EA0', '#00868B', '#00C5CD', '#00E5EE', '#00F5FF', '#67E6EC', '#4A777A', '#05EDFF', '#53868B', '#73B1B7', '#05E9FF', '#7AC5CD', '#8EE5EE', '#05B8CC', '#98F5FF', '#B0E0E6', '#C1F0F6', '#39B7CD', '#65909A', '#0EBFE9','#C3E4ED', '#68838B', '#63D1F4', '#9AC0CD', '#50A6C2', '#ADD8E6', '#B2DFEE', '#00688B', '#0099CC', '#009ACD', '#00B2EE', '#00BFFF', '#BFEFFF', '#33A1C9', '#507786', '#87CEEB', '#38B0DE', '#0BB5FF', '#42C0FB', '#6996AD', '#539DC2', '#236B8E', '#3299CC', '#0198E1', '#33A1DE', '#607B8B', '#35586C', '#5D92B1', '#8DB6CD', '#325C74', '#A4D3EE', '#82CFFD', '#67C8FF', '#B0E2FF', '#87CEFA', '#6CA6CD', '#4A708B', '#9BC4E2', '#7EC0EE', '#87CEFF', '#517693', '#5D7B93', '#42647F', '#4682B4', '#4F94CD', '#5CACEE', '#63B8FF', '#525C65', '#36648B', '#62B1F6', '#74BBFB', '#F0F8FF', '#4E78A0', '#0D4F8B', '#708090', '#708090', '#778899', '#778899', '#6183A6', '#9FB6CD', '#7D9EC0', '#104E8B', '#1874CD', '#1C86EE', '#60AFFE', '#007FFF', '#1E90FF', '#6C7B8B', '#B7C3D0', '#739AC5', '#75A1D0', '#B9D3EE', '#499DF5', '#C6E2FF', '#3B6AA0', '#7AA9DD', '#0276FD', '#003F87', '#6E7B8B', '#506987', '#A2B5CD', '#4372AA', '#26466D', '#1D7CF2', '#687C97','#344152', '#50729F', '#4973AB', '#B0C4DE', '#3063A5', '#BCD2EE', '#7EB6FF', '#CAE1FF', '#4D71A3', '#2B4F81', '#4981CE', '#88ACE0', '#5993E5', '#3A66A7', '#3579DC', '#5190ED', '#42526C', '#4D6FAC', '#2C5197', '#6495ED', '#6D9BF1', '#5B90F6', '#1464F4', '#3A5894', '#7093DB', '#1B3F8B', '#5971AD', '#0147FA', '#3D59AB', '#27408B', '#3A5FCD', '#4169E1', '#436EEE', '#003EFF', '#4876FF', '#A9ACB6', '#22316C', '#162252', '#3B4990', '#283A90', '#6F7285', '#838EDE', '#E6E8FA', '#7D7F94', '#2E37FE', '#2F2F4F', '#42426F', '#8F8FBC', '#5959AB', '#7171C6', '#D9D9F3', '#23238E', '#3232CC', '#3232CD', '#191970', '#E6E6FA', '#000033', '#000080', '#00008B', '#00009C', '#0000CD', '#0000EE', '#0000FF', '#3333FF', '#4D4DFF', '#6666FF', '#AAAAFF', '#CCCCFF', '#F8F8FF', '#5B59BA', '#120A8F', '#302B54', '#483D8B', '#473C8B', '#3B3178', '#6A5ACD', '#6959CD', '#7A67EE', '#8470FF', '#836FFF', '#7B68EE', '#3300FF', '#5D478B', '#9F79EE', '#8968CD','#9370DB', '#AB82FF', '#6600FF', '#380474']]
 
-var colorScheme = 1
-colors = colors[colorScheme]
+
 var width, height
 
 function resize() { cnvs.width = width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0); cnvs.height = height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0); }
@@ -14,7 +13,7 @@ window.addEventListener("resize", resize);
 //initialising array
 var balls = []
 
-//url:  gravity, no balls, min radius, max radius, velocity
+//url:  gravity, no balls, min radius, max radius, velocity, colour scheme
 urlVariables = location.href.split("?")[1].split(",")
 
 //variables
@@ -23,6 +22,10 @@ var radius = {min: +urlVariables[2], max: +urlVariables[3]} 			//min, max
 var velocity = {min: -urlVariables[4], max: +urlVariables[4]}
 var gravity = +urlVariables[0]				//global gravity
 var spawn = {x: 50, y: 50,  w: width - 50, h: height - 50}	//limits for ball to spawn inside
+var colorScheme = +urlVariables[5]
+
+colors = colors[colorScheme]
+
 
 function randNum(min, max){					//returns random integer including min, excluding max
 	return Math.random() * (max - min) + min
