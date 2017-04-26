@@ -62,7 +62,7 @@ function populateBalls(){
 function drawBalls(){
 	for (b = 0 ; b < noBalls ; b ++){
 		ball = balls[b]
-		drawCircle(ball.x, ball.y, ball.r, colors[b])
+		drawCircle(ball.x, ball.y, ball.r, colors[b % colors.length])
 	}
 }
 
