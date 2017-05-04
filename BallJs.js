@@ -11,10 +11,16 @@ resize();
 window.addEventListener("resize", resize);
 window.addEventListener("mousemove", mouseMove, false)
 window.addEventListener("click", mouseClick, false)
+window.addEventListener("mousewheel", mouseWheel, false)
 
 var mouseX
 var mouseY
-		
+
+function mouseWheel(event){
+	if (event.wheelDeltaY == 120) mouseRadius += 10
+	else mouseRadius -= 10
+}
+
 function mouseMove(event){
 	mouseX = event.offsetX
 	mouseY = event.offsetY
@@ -49,7 +55,7 @@ var noBalls = +urlVariables[1]
 var radius = {min: +urlVariables[2], max: +urlVariables[3]} 			//min, max
 var velocity = {min: -urlVariables[4], max: +urlVariables[4]}
 var gravity = +urlVariables[0]				//global gravity
-var spawn = {x: 50, y: 50,  w: width - 50, h: height - 50}	//limits for ball to spawn inside
+var spawn = {x: 10, y: 50,  w: 100, h: height - 50}	//limits for ball to spawn inside
 var collisions = +urlVariables[5]
 var mouseRadius = 30
 colors = colors[0]
