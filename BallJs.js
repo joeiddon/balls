@@ -6,25 +6,53 @@ colors = [['#800000', '#8B0000', '#B22222', '#FF0000', '#FA8072', '#FF6347', '#F
 var width, height
 
 function resize() { cnvs.width = width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0); cnvs.height = height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0); }
-
 resize();
+
 window.addEventListener("resize", resize);
+window.addEventListener("mousemove", mouseMove, false)
+window.addEventListener("click", mouseClick, false)
+
+var mouseX
+var mouseY
+		
+function mouseMove(event){
+	mouseX = event.offsetX
+	mouseY = event.offsetY
+}
+
+function mouseClick(event){
+	creator = true
+	for (b = 0; b < noBollards; b ++){
+		if (Math.sqrt(Math.pow(bollards[b].x - mouseX, 2) + Math.pow(bollards[b].y - mouseY, 2)) < mouseRadius){
+			creator = false
+			noBollards--
+			bollards.splice(b, 1)
+		}
+	}
+	if (creator) {
+		noBollards++
+		bollards.push({x: mouseX, y: mouseY, r: mouseRadius})
+	}
+}
+
 
 //initialising array
 var balls = []
+var bollards = []
 
-//url:  gravity, no balls, min radius, max radius, velocity, colour scheme
+//url:  gravity, no balls, min radius, max radius, velocity, collisions
 urlVariables = location.href.split("?")[1].split(",")
 
 //variables
+var noBollards = 0
 var noBalls = +urlVariables[1]
 var radius = {min: +urlVariables[2], max: +urlVariables[3]} 			//min, max
 var velocity = {min: -urlVariables[4], max: +urlVariables[4]}
 var gravity = +urlVariables[0]				//global gravity
 var spawn = {x: 50, y: 50,  w: width - 50, h: height - 50}	//limits for ball to spawn inside
-var colorScheme = +urlVariables[5]
-
-colors = colors[colorScheme]
+var collisions = +urlVariables[5]
+var mouseRadius = 30
+colors = colors[0]
 
 
 function randNum(min, max){					//returns random integer including min, excluding max
@@ -61,16 +89,26 @@ function clearScreen(){
 
 function populateBalls(){
 	for (b = 0 ; b < noBalls ; b ++){
-		balls.push({x: randNum(spawn.x, spawn.w), y: randNum(spawn.y, spawn.h), vx: randNum(velocity.min, velocity.max), vy: randNum(velocity.min, velocity.max), r: randNum(radius.min, radius.max)})
+		balls.push({x: randNum(spawn.x, spawn.w), y: randNum(spawn.y, spawn.h), vx: randNum(velocity.min, velocity.max), vy: randNum(velocity.min, velocity.max), r: randNum(radius.min, radius.max), c: colors[parseInt(randNum(0, colors.length))]})
 	}
 }
 
 function drawBalls(){
+	//draw all balls
 	for (b = 0 ; b < noBalls ; b ++){
 		ball = balls[b]
 				
-		drawCircle(ball.x, ball.y, ball.r, colors[b % colors.length])
+		drawCircle(ball.x, ball.y, ball.r, ball.c)
 	}
+	
+	//draw bollards
+	for (b = 0 ; b < noBollards ; b++){
+		bollard = bollards[b]
+		drawCircle(bollard.x, bollard.y, bollard.r, "rgba(40, 220, 255, 0.6)")
+	}
+	
+	//draw mouse position
+	drawCircle(mouseX, mouseY, mouseRadius, "rgba(255, 70, 90, 0.8")
 }
 
 function updateBallPositions(){
@@ -142,7 +180,7 @@ function collision(b1, b2){
 	normVel1.x = xNormVels[0]
 	normVel2.x = xNormVels[1]
 	normVel1.y = yNormVels[0]
-	normVel2.y = yNormVels[1] 
+	normVel2.y = yNormVels[1]
 
 	//setting the actual velocities of the balls to the sum of the normal and tangental velocities	
 	balls[b1].vx = normVel1.x + tangVel1.x
@@ -162,6 +200,69 @@ function collision(b1, b2){
 	*/
 }
 
+function mouseCollisions(){
+	for (b = 0; b < noBalls; b++){
+		ball = balls[b]
+		if ((Math.sqrt(Math.pow(ball.x - mouseX, 2) + Math.pow(ball.y - mouseY, 2)) < ball.r + mouseRadius)){
+			//the mouse acts as ball 1 with a huge radius(mass)
+			
+			//asignning deltaX and deltaY for the positions of the balls
+			deltaX = balls[b].x - mouseX
+			deltaY = balls[b].y - mouseY
+			
+			//initialising the  current normal and tangental velocities to the collision for each ball
+			normVel2 = normalVel(b)
+			tangVel2 = tangentVel(b)
+			
+			//applying the "momentum" function to these velocities to work out the post colliison velocities
+			xNormVels = momentum(0, normVel2.x, 100000000000000, balls[b].r)
+			yNormVels = momentum(0, normVel2.y, 100000000000000, balls[b].r)
+
+			//reassigning the post collision velocities	
+			normVel2.x = xNormVels[1]
+			normVel2.y = yNormVels[1]
+
+			//setting the actual velocities of the balls to the sum of the normal and tangental velocities	
+			balls[b].vx = normVel2.x + tangVel2.x
+			balls[b].vy = normVel2.y + tangVel2.y
+			
+			
+		}
+	}
+}
+
+function bollardCollisions(){
+	for (bol = 0; bol < noBollards; bol++){
+		for (bal = 0; bal < noBalls; bal++){
+			bollard = bollards[bol]
+			ball = balls[bal]
+			if (overlap(bollard.x, bollard.y, ball.x + ball.vx, ball.y + ball.vy, bollard.r, ball.r)){
+				
+				//asignning deltaX and deltaY for the positions of the balls
+				deltaX = balls[bal].x - bollard.x
+				deltaY = balls[bal].y - bollard.y
+				
+				//initialising the  current normal and tangental velocities to the collision for each ball
+				normVel2 = normalVel(bal)
+				tangVel2 = tangentVel(bal)
+				
+				//applying the "momentum" function to these velocities to work out the post colliison velocities
+				xNormVels = momentum(0, normVel2.x, 100000000000000, balls[bal].r)
+				yNormVels = momentum(0, normVel2.y, 100000000000000, balls[bal].r)
+
+				//reassigning the post collision velocities	
+				normVel2.x = xNormVels[1]
+				normVel2.y = yNormVels[1]
+
+				//setting the actual velocities of the balls to the sum of the normal and tangental velocities	
+				balls[bal].vx = normVel2.x + tangVel2.x
+				balls[bal].vy = normVel2.y + tangVel2.y
+				
+			}
+		}
+	}
+}
+
 function applyGravity(){
 	for (b = 0 ; b < noBalls ; b ++ ){
 		if (balls[b].y + balls[b].r + gravity < height){
@@ -175,7 +276,9 @@ function applyGravity(){
 function update(){
 
 	wallCollisions()
-	ballCollisions()
+	if (collisions == 1) ballCollisions()
+	//mouseCollisions()
+	bollardCollisions()	
 	applyGravity()
 	updateBallPositions()
 	clearScreen()
