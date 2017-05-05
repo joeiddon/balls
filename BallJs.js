@@ -12,7 +12,7 @@ window.addEventListener("resize", resize);
 window.addEventListener("mousemove", mouseMove, false)
 window.addEventListener("click", mouseClick, false)
 window.addEventListener("mousewheel", mouseWheel, false)
-window.addEventListener("keypress", function(event){ if (event.keyCode == 82) restart()})
+window.addEventListener("keydown", function(event){ if (event.keyCode == 82) restart()})
 
 var mouseX
 var mouseY
