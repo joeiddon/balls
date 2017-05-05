@@ -18,7 +18,7 @@ var mouseY
 
 function mouseWheel(event){
 	if (event.wheelDeltaY == 120) mouseRadius += 10
-	else mouseRadius -= 10
+	if (event.wheelDeltaY == -120) mouseRadius -= 10
 }
 
 function mouseMove(event){
@@ -277,6 +277,11 @@ function applyGravity(){
 		//else balls[b].y = height - balls[b].r
 		//else console.log(b, "on ground")
 	}
+}
+
+function restart(){
+	balls = []
+	populateBalls()
 }
 
 function update(){
