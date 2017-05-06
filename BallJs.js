@@ -59,6 +59,7 @@ var gravity = +urlVariables[0]				//global gravity
 var spawn = {x: 10, y: 50,  w: width - 50, h: height - 50}	//limits for ball to spawn inside
 var collisions = +urlVariables[5]
 var mouseRadius = 30
+var tracing = false
 colors = colors[0]
 
 
@@ -293,7 +294,7 @@ function update(){
 	bollardCollisions()	
 	applyGravity()
 	updateBallPositions()
-	clearScreen()
+	if (!tracing) clearScreen()
 	drawBalls()
 }
 
