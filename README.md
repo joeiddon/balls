@@ -5,3 +5,5 @@
 The parameters such as *gravity*, *number of balls*, *starting velocities*, etc. can be adjusted in the *URL* after the question mark *('?')*.
 
 You can *scroll* and *click* with your mouse to create permenent balls or bollards which the other *(non-permenent)* balls will collide with.
+
+*Try* turning off *gravity (set to 0)*, turning down the *ball radii* and turning the *number of balls* up a **ton**... 
