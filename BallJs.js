@@ -63,6 +63,7 @@ var spawn = {x: 10, y: 50,  w: width - 50, h: height - 50}	//limits for ball to 
 var collisions = +urlVariables[5]
 var mouseRadius = 30
 var tracing = false
+var outline = true
 
 
 function randNum(min, max){					//returns random integer including min, excluding max
@@ -87,8 +88,10 @@ function drawCircle(x, y, radius, color){
 	//color = ("0" + (x / width) * 0xff).toString(16).substr(-2).repeat(3);
 	ctx.beginPath(x, y)
 	ctx.arc(x, y, radius, 0, Math.PI * 2)
-	ctx.strokeStyle = "black"
-	ctx.stroke()
+	if (outline){
+		ctx.strokeStyle = "black"
+		ctx.stroke()
+	}
 	ctx.fillStyle = color
 	ctx.fill()
 }
