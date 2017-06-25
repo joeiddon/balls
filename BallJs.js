@@ -8,7 +8,11 @@ centreGoalBolards = [{"x":493,"y":508,"r":330},{"x":1133,"y":382,"r":290},{"x":8
 smallScreenBolards = [{"x":493,"y":508,"r":330},{"x":1133,"y":382,"r":290},{"x":1369,"y":689,"r":60},{"x":1446,"y":571,"r":60},{"x":1426,"y":828,"r":60},{"x":1470,"y":730,"r":30},{"x":1485,"y":664,"r":30},{"x":1462,"y":468,"r":30},{"x":1391,"y":928,"r":30},{"x":782,"y":177,"r":90},{"x":915,"y":93,"r":50},{"x":625,"y":140,"r":50},{"x":527,"y":127,"r":30},{"x":1009,"y":74,"r":30},{"x":671,"y":202,"r":10},{"x":849,"y":93,"r":10},{"x":982,"y":115,"r":10},{"x":1362,"y":604,"r":20},{"x":1361,"y":775,"r":10},{"x":1424,"y":748,"r":10},{"x":1422,"y":495,"r":10},{"x":1369,"y":886,"r":10},{"x":808,"y":306,"r":30},{"x":1275,"y":675,"r":20},{"x":693,"y":94,"r":20},{"x":1919,"y":336,"r":20},{"x":688,"y":224,"r":10},{"x":679,"y":178,"r":10},{"x":558,"y":169,"r":10},{"x":688,"y":127,"r":10},{"x":1056,"y":87,"r":10},{"x":968,"y":52,"r":10},{"x":1313,"y":631,"r":10},{"x":1385,"y":764,"r":10},{"x":1356,"y":803,"r":10},{"x":1342,"y":758,"r":10},{"x":1444,"y":690,"r":10},{"x":1435,"y":425,"r":10},{"x":1483,"y":507,"r":10},{"x":566,"y":97,"r":10},{"x":495,"y":161,"r":10},{"x":760,"y":287,"r":10},{"x":841,"y":268,"r":10},{"x":1050,"y":267,"r":0},{"x":650,"y":502,"r":0},{"x":648,"y":200,"r":10},{"x":1239,"y":676,"r":10},{"x":1296,"y":703,"r":10},{"x":1330,"y":612,"r":10},{"x":1483,"y":778,"r":10},{"x":1509,"y":703,"r":10},{"x":1505,"y":618,"r":10},{"x":1443,"y":394,"r":10},{"x":1465,"y":420,"r":10},{"x":1434,"y":905,"r":10},{"x":1349,"y":947,"r":10},{"x":1437,"y":648,"r":10},{"x":1173,"y":863,"r":180},{"x":819,"y":899,"r":160},{"x":581,"y":907,"r":60},{"x":640,"y":982,"r":30},{"x":465,"y":881,"r":30},{"x":496,"y":936,"r":20},{"x":407,"y":857,"r":20},{"x":417,"y":895,"r":10},{"x":442,"y":922,"r":10},{"x":514,"y":861,"r":10},{"x":639,"y":837,"r":20},{"x":665,"y":809,"r":10},{"x":587,"y":991,"r":10},{"x":676,"y":1023,"r":10},{"x":897,"y":1059,"r":10},{"x":992,"y":946,"r":10},{"x":519,"y":994,"r":30},{"x":442,"y":974,"r":30},{"x":363,"y":895,"r":30},{"x":407,"y":932,"r":20},{"x":346,"y":839,"r":20},{"x":573,"y":1027,"r":20},{"x":615,"y":1029,"r":10},{"x":473,"y":1015,"r":10},{"x":389,"y":973,"r":10},{"x":361,"y":950,"r":10},{"x":315,"y":874,"r":10},{"x":307,"y":809,"r":10},{"x":305,"y":841,"r":10},{"x":1063,"y":1068,"r":10},{"x":603,"y":835,"r":10},{"x":648,"y":938,"r":10},{"x":649,"y":1032,"r":10},{"x":996,"y":1006,"r":40},{"x":941,"y":1047,"r":20},{"x":1057,"y":1035,"r":20},{"x":1025,"y":1060,"r":10},{"x":994,"y":1069,"r":10},{"x":1094,"y":1044,"r":10},{"x":1124,"y":1053,"r":10},{"x":898,"y":171,"r":20},{"x":883,"y":205,"r":10},{"x":928,"y":157,"r":10}]
 var width, height
 
-function resize() { cnvs.width = width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0); cnvs.height = height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0); }
+function resize() { 
+	cnvs.width = width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0); 
+	cnvs.height = height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+	if (radius)	spawn = {x: radius.max, y: radius.max,  w: width - radius.max * 2, h: height - radius.max * 2}
+}
 resize();
 
 window.addEventListener("resize", resize);
@@ -17,56 +21,100 @@ window.addEventListener("click", mouseClick, false)
 window.addEventListener("mousewheel", mouseWheel, false)
 window.addEventListener("keydown", function(event){ if (event.keyCode == 82) restart()})
 
-var mouseX
-var mouseY
+mouse = {x: -100, y: 100, r: 30}
 
 function mouseWheel(event){
-	if (event.wheelDeltaY == 120) mouseRadius += 10
-	if (event.wheelDeltaY == -120) mouseRadius -= 10
+	if (event.wheelDeltaY == 120) mouse.r += 10
+	if (event.wheelDeltaY == -120 && mouse.r > 0) mouse.r -= 10
 }
 
 function mouseMove(event){
-	mouseX = event.offsetX
-	mouseY = event.offsetY
+	mouse.x = event.offsetX
+	mouse.y = event.offsetY
 }
 
 function mouseClick(event){
-	creator = true
-	for (b = 0; b < noBollards; b ++){
-		if (Math.sqrt(Math.pow(bollards[b].x - mouseX, 2) + Math.pow(bollards[b].y - mouseY, 2)) < mouseRadius){
-			creator = false
-			noBollards--
-			bollards.splice(b, 1)
+	if (menu){
+		clicked = Math.ceil(mouse.y / ( height / menuRows.length)) - 1
+		mouse.x < width / 2 ? menuRows[clicked].lc() : menuRows[clicked].rc()	
+	} else {
+		if ((mouse.x < menuButton.x + menuButton.w) && (mouse.x > menuButton.x) && (mouse.y < menuButton.y + menuButton.h) && (mouse.y > menuButton.y)){
+			menu = true
+			return
 		}
-	}
-	if (creator) {
-		noBollards++
-		bollards.push({x: mouseX, y: mouseY, r: mouseRadius})
-	}
+		creator = true
+		for (b = 0; b < noBollards; b ++){
+			if (Math.sqrt(Math.pow(bollards[b].x - mouse.x, 2) + Math.pow(bollards[b].y - mouse.y, 2)) < mouse.r){
+				creator = false
+				noBollards--
+				bollards.splice(b, 1)
+			}
+		}
+		if (creator) {
+			noBollards++
+			bollards.push({x: mouse.x, y: mouse.y, r: mouse.r})
+		}
+	}		
 }
 
 
-//initialising array
+//initialising arrays
 var balls = []
 var bollards = []
 
+/*
 //url:  gravity, no balls, min radius, max radius, velocity, collisions
 urlVariables = location.href.split("?")[1].split(",")
-
-//variables
-var noBollards = 0
+//url variables
 var noBalls = +urlVariables[1]
 var radius = {min: +urlVariables[2], max: +urlVariables[3]} 			//min, max
-var velocity = {min: -urlVariables[4], max: +urlVariables[4]}
+var velocity = urlVariables[4]
 var gravity = +urlVariables[0]				//global gravity
-var spawn = {x: 10, y: 50,  w: width - 50, h: height - 50}	//limits for ball to spawn inside
+var spawn = {x: radius.max, y: radius.max,  w: width - radius.max * 2, h: height - radius.max * 2}	//limits for ball to spawn inside
 var collisions = +urlVariables[5]
-var mouseRadius = 30
+*/
+
+//variables
+var noBalls = 100
+var noBollards = 0
+var radius = {min: 5, max: 5}
+var spawn = {x: radius.max, y: radius.max,  w: width - radius.max * 2, h: height - radius.max * 2}	//limits for ball to spawn inside
+var velocity = 90
+var gravity = 9.8
+var cor = 1
+var collisions = true
 var tracing = false
 var outline = true
+var fps = 60 	//this is an arbitary calcultaion for fps so it is lower when there are more balls
+var menu = false
+var menuButton = {x: 10, y: 10, w: 120, h: 70}
+var menuPadding = 20
+var menuRows = [
+	{tag: "decrease", val: ()=>"increase", unit: "", lc: ()=>"", rc: ()=>""},
+	{tag: "number of balls", val: ()=>noBalls, unit: "(num)", lc: ()=> noBalls /= 2, rc: ()=> noBalls *= 2},
+	{tag: "gravity", val: ()=>Math.round(gravity*10)/10, unit: "(pix/sec^2)", lc: ()=> gravity-=2.45, rc: ()=> gravity += 2.45},
+	{tag: "start velocity", val: ()=>velocity, unit: "(pix/sec)", lc: ()=> velocity -= 10, rc: ()=> velocity += 10},
+	{tag: "minimum radius", val: ()=>radius.min, unit: "(pix)", lc: ()=> radius.min /= 2, rc: ()=> radius.min *= 2},
+	{tag: "maximum radius", val: ()=>radius.max, unit: "(pix)", lc: ()=> radius.max /= 2, rc: ()=> radius.max *= 2},
+	{tag: "coeff. of restitution", val: ()=>Math.round(cor*10)/10, unit: "", lc: ()=> cor -= 0.1, rc: ()=> cor += 0.1},
+	{tag: "ball collisions", val: ()=>collisions, unit: "", lc: ()=> collisions = !collisions, rc: ()=> collisions = !collisions},
+	{tag: "tracing", val: ()=>tracing, unit: "", lc: function(){tracing=!tracing}, rc: function(){exitMenu(); tracing=!tracing}},
+	{tag: "exit/restart", val: ()=>"('r')", unit: "", lc: exitMenu, rc: exitMenu}
+]
 
+function exitMenu(){
+	menu = false
+	ctx.clearRect(0,0,width,height)
+	restart()
+}
 
-function randNum(min, max){					//returns random integer including min, excluding max
+function getKe(){
+	kE = 0
+	balls.forEach(o => o.r * (kE += o.vx * o.vx + o.vy * o.vy))
+	return kE
+}
+
+function randNum(min, max){					//returns random float including min, excluding max
 	return Math.random() * (max - min) + min
 }
 
@@ -97,18 +145,19 @@ function drawCircle(x, y, radius, color){
 }
 
 function clearScreen(){
+	if (tracing) return
 	ctx.clearRect(0, 0, width, height)
 }
 
 function populateBalls(){
 	for (b = 0 ; b < noBalls ; b ++){
-		balls.push({x: randNum(spawn.x, spawn.w), y: randNum(spawn.y, spawn.h), vx: randNum(velocity.min, velocity.max), vy: randNum(velocity.min, velocity.max), r: randNum(radius.min, radius.max), c: colors[parseInt(randNum(0, colors.length))]})
+		balls.push({x: randNum(spawn.x, spawn.x + spawn.w), y: randNum(spawn.y, spawn.y +  spawn.h), vx: randNum(velocity * -1, velocity) / fps, vy: randNum(velocity * -1, velocity) / fps, r: randNum(radius.min, radius.max), c: colors[parseInt(randNum(0, colors.length))]})
 	}
 }
 
 function drawBalls(){
 	//draw all balls
-	for (b = 0 ; b < noBalls ; b ++){
+	for (b = 0 ; b < balls.length ; b ++){
 		ball = balls[b]
 				
 		drawCircle(ball.x, ball.y, ball.r, ball.c)
@@ -121,35 +170,35 @@ function drawBalls(){
 	}
 	
 	//draw mouse position
-	drawCircle(mouseX, mouseY, mouseRadius, "rgba(255, 70, 90, 0.8")
+	drawCircle(mouse.x, mouse.y, mouse.r > 0 ? mouse.r : 0, "rgba(255, 70, 90, 0.8")
 }
 
 function updateBallPositions(){
-	for (b = 0 ; b < noBalls ; b ++){
+	for (b = 0 ; b < balls.length ; b ++){
 		ball = balls[b]
 		ball.x += ball.vx
-		ball.y += ball.vy
+		ball.y += ball.vy + 0.5 * (gravity / fps)
 	}
 }
 
-
 function wallCollisions(){
-	for (b = 0 ; b < noBalls ; b ++){
+	for (b = 0 ; b < balls.length ; b ++){
 		ball = balls[b]
 		if ((ball.x + ball.vx) - ball.r < 0 || (ball.x + ball.vx) + ball.r > width){
-			ball.vx *= -1
+			ball.vx *= -1 * cor
 			ball.x = Math.min(ball.x + ball.r, width) - ball.r;
 		}
 		if (ball.y + ball.vy - ball.r < 0 || ball.y + ball.vy + ball.r > height){
-			ball.vy *= -1
+			ball.vy *= -1 * cor
 			ball.y = Math.min(ball.y + ball.r, height) - ball.r;
 		}
 	}
 }
 
 function ballCollisions(){
-	for (b1 = 0 ; b1 < noBalls ; b1 ++ ){
-		for (b2 = b1 + 1 ; b2 < noBalls ; b2 ++){
+	if (!collisions) return
+	for (b1 = 0 ; b1 < balls.length ; b1 ++ ){
+		for (b2 = b1 + 1 ; b2 < balls.length ; b2 ++){
 			if (overlap(balls[b1].x + balls[b1].vx, balls[b1].y + balls[b1].vy, balls[b2].x + balls[b2].vx, balls[b2].y + balls[b2].vy, balls[b1].r, balls[b2].r)){
 				collision(b1, b2)
 			}
@@ -171,7 +220,6 @@ function tangentVel(b){
 	 return {x: tX, y: tY}
 }
 
-
 function collision(b1, b2){
 
 	//asignning deltaX and deltaY for the positions of the balls
@@ -185,15 +233,15 @@ function collision(b1, b2){
 	tangVel2 = tangentVel(b2)
 
 
-	//applying the "momentum" function to these velocities to work out the post colliison velocities
-	xNormVels = momentum(normVel1.x, normVel2.x, balls[b1].r, balls[b2].r)
-	yNormVels = momentum(normVel1.y, normVel2.y, balls[b1].r, balls[b2].r)
+	//applying the "momentum" function to these velocities to work out the post collison velocities
+	xNormVels = momentum(normVel1.x, normVel2.x, Math.pow(balls[b1].r, 2), Math.pow(balls[b2].r, 2))
+	yNormVels = momentum(normVel1.y, normVel2.y, Math.pow(balls[b1].r, 2), Math.pow(balls[b2].r, 2))
 
 	//reassigning the post collision velocities	
-	normVel1.x = xNormVels[0]
-	normVel2.x = xNormVels[1]
-	normVel1.y = yNormVels[0]
-	normVel2.y = yNormVels[1]
+	normVel1.x = xNormVels[0] * cor
+	normVel2.x = xNormVels[1] * cor
+	normVel1.y = yNormVels[0] * cor
+	normVel2.y = yNormVels[1] * cor
 
 	//setting the actual velocities of the balls to the sum of the normal and tangental velocities	
 	balls[b1].vx = normVel1.x + tangVel1.x
@@ -213,8 +261,107 @@ function collision(b1, b2){
 	*/
 }
 
+function bollardCollisions(){
+	for (bol = 0; bol < noBollards; bol++){
+		for (bal = 0; bal < balls.length; bal++){
+			bollard = bollards[bol]
+			ball = balls[bal]
+			if (overlap(bollard.x, bollard.y, ball.x + ball.vx, ball.y + ball.vy, bollard.r, ball.r)){
+				
+				//asignning deltaX and deltaY for the positions of the balls
+				deltaX = ball.x - bollard.x
+				deltaY = ball.y - bollard.y
+				
+				//initialising the  current normal and tangental velocities to the collision for each ball
+				normVel2 = normalVel(bal)
+				tangVel2 = tangentVel(bal)
+				
+				//applying the "momentum" function to these velocities to work out the post colliison velocities
+				xNormVels = momentum(0, normVel2.x, 100000000000000, ball.r)
+				yNormVels = momentum(0, normVel2.y, 100000000000000, ball.r)
+
+				//reassigning the post collision velocities	
+				normVel2.x = xNormVels[1] * cor
+				normVel2.y = yNormVels[1] * cor
+
+				//setting the actual velocities of the balls to the sum of the normal and tangental velocities	
+				ball.vx = normVel2.x + tangVel2.x
+				ball.vy = normVel2.y + tangVel2.y			
+			}
+		}
+	}
+}
+
+function applyGravity(){
+	for (b = 0 ; b < balls.length ; b ++ ){
+		balls[b].vy += gravity / fps
+	}
+}
+
+function restart(){
+	menu = false
+	ctx.clearRect(0,0,width,height)
+	balls = []
+	populateBalls()
+}
+
+function drawMenu(){
+	if (menu){
+		for (var r = 0; r < menuRows.length; r ++){
+			row = menuRows[r]
+			rowHeight = (height - (menuRows.length + 1) * menuPadding) / menuRows.length
+			ctx.fillStyle = "rgba(255, 150, 114, 0.5)"
+			ctx.fillRect(menuPadding, menuPadding * (r+1) + r * rowHeight, width - 2 * menuPadding, rowHeight)
+			fontSize = height / 25
+			ctx.font = fontSize.toString() + "px courier"
+			ctx.fillStyle = "rgba(0,0,0,0.5)"
+			ctx.textAlign = "end"
+			ctx.fillText(row.tag + " : ", width / 2, menuPadding + fontSize / 4 + (menuPadding + rowHeight) * r + rowHeight / 2)
+			ctx.textAlign = "start"
+			ctx.fillText(row.val().toString() + row.unit, width / 2, menuPadding + fontSize / 4 + (menuPadding + rowHeight) * r + rowHeight / 2)
+		}
+	} else {
+		ctx.fillStyle = "rgba(255, 150, 114, 0.5)"
+		ctx.fillRect(menuButton.x, menuButton.y, menuButton.w, menuButton.h)
+		ctx.textAlign = "center"
+		ctx.font = "20px courier"
+		ctx.fillStyle = "rgba(0,0,0,0.5)"
+		ctx.fillText("menu", menuButton.x + menuButton.w / 2, menuButton.y + menuButton.h / 2 + 5)
+	}
+}
+
+function update(){
+
+	applyGravity()
+
+	//check and modify velocities if any collisions
+	wallCollisions()
+	ballCollisions()
+	bollardCollisions()
+
+	updateBallPositions()
+
+	//clear and draw balls and menu
+	clearScreen()
+
+	drawBalls()
+	//draw menu (either the button to enter menu or the 
+	drawMenu();
+	ctx.fillStyle = "rgba(255,255,255,0.5)"
+	ctx.textAlign = "start"
+	ctx.fillText("energy: " + Math.round(getKe()), 10, 100)
+	
+}
+
+populateBalls();
+//noBalls = 1
+//balls = [{x: 50, y:150, vx: 100 / fps, vy: 60 / fps, r: 30, c: "green"}, {x: 200, y:100, vx: 0, vy: 0, r: 30, c: "red"}]
+
+setInterval(update, 1000 / fps)
+
+
 function mouseCollisions(){
-	for (b = 0; b < noBalls; b++){
+	for (b = 0; b < balls.length; b++){
 		ball = balls[b]
 		if ((Math.sqrt(Math.pow(ball.x - mouseX, 2) + Math.pow(ball.y - mouseY, 2)) < ball.r + mouseRadius)){
 			//the mouse acts as ball 1 with a huge radius(mass)
@@ -243,67 +390,3 @@ function mouseCollisions(){
 		}
 	}
 }
-
-function bollardCollisions(){
-	for (bol = 0; bol < noBollards; bol++){
-		for (bal = 0; bal < noBalls; bal++){
-			bollard = bollards[bol]
-			ball = balls[bal]
-			if (overlap(bollard.x, bollard.y, ball.x + ball.vx, ball.y + ball.vy, bollard.r, ball.r)){
-				
-				//asignning deltaX and deltaY for the positions of the balls
-				deltaX = balls[bal].x - bollard.x
-				deltaY = balls[bal].y - bollard.y
-				
-				//initialising the  current normal and tangental velocities to the collision for each ball
-				normVel2 = normalVel(bal)
-				tangVel2 = tangentVel(bal)
-				
-				//applying the "momentum" function to these velocities to work out the post colliison velocities
-				xNormVels = momentum(0, normVel2.x, 100000000000000, balls[bal].r)
-				yNormVels = momentum(0, normVel2.y, 100000000000000, balls[bal].r)
-
-				//reassigning the post collision velocities	
-				normVel2.x = xNormVels[1]
-				normVel2.y = yNormVels[1]
-
-				//setting the actual velocities of the balls to the sum of the normal and tangental velocities	
-				balls[bal].vx = normVel2.x + tangVel2.x
-				balls[bal].vy = normVel2.y + tangVel2.y
-				
-			}
-		}
-	}
-}
-
-function applyGravity(){
-	for (b = 0 ; b < noBalls ; b ++ ){
-		if (balls[b].y + balls[b].r + gravity < height){
-			balls[b].vy += gravity
-		}
-		//else balls[b].y = height - balls[b].r
-		//else console.log(b, "on ground")
-	}
-}
-
-function restart(){
-	balls = []
-	populateBalls()
-}
-
-function update(){
-
-	wallCollisions()
-	if (collisions == 1) ballCollisions()
-	//mouseCollisions()
-	bollardCollisions()	
-	applyGravity()
-	updateBallPositions()
-	if (!tracing) clearScreen()
-	drawBalls()
-}
-
-populateBalls();
-//balls = [{x: 50, y:150, vx: 3, vy: 0, r: 30}, {x: 200, y:100, vx: 0, vy: 0, r: 30}]
-
-setInterval(update, 15)
