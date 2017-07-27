@@ -75,9 +75,9 @@ var collisions = +urlVariables[5]
 */
 
 //variables
-var noBalls = 128
+var noBalls = 16
 var noBollards = 0
-var radius = {min: 5, max: 5}
+var radius = {min: 2, max: 32}
 var spawn = {x: radius.max, y: radius.max,  w: width - radius.max * 2, h: height - radius.max * 2}	//limits for ball to spawn inside
 var velocity = 90
 var gravity = 9.8
