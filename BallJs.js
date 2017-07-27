@@ -85,7 +85,7 @@ var cor = 1
 var collisions = true
 var tracing = false
 var outline = true
-var fps = 60 	//this is an arbitary calcultaion for fps so it is lower when there are more balls
+var fps = 30
 var menu = false
 var menuButton = {x: 10, y: 10, w: 120, h: 70}
 var menuPadding = 20
@@ -104,6 +104,7 @@ var menuRows = [
 
 function exitMenu(){
 	menu = false
+	spawn = {x: radius.max, y: radius.max,  w: width - radius.max * 2, h: height - radius.max * 2}
 	ctx.clearRect(0,0,width,height)
 	restart()
 }
