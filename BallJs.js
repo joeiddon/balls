@@ -328,6 +328,9 @@ function drawMenu(){
 		ctx.font = "20px courier"
 		ctx.fillStyle = "rgba(0,0,0,0.5)"
 		ctx.fillText("menu", menuButton.x + menuButton.w / 2, menuButton.y + menuButton.h / 2 + 5)
+		ctx.fillStyle = "rgba(255,255,255,0.5)"
+		ctx.textAlign = "start"
+		ctx.fillText("energy: " + Math.round(getKe()), 10, 100)
 	}
 }
 
@@ -347,11 +350,7 @@ function update(){
 
 	drawBalls()
 	//draw menu (either the button to enter menu or the 
-	drawMenu();
-	ctx.fillStyle = "rgba(255,255,255,0.5)"
-	ctx.textAlign = "start"
-	ctx.fillText("energy: " + Math.round(getKe()), 10, 100)
-	
+	drawMenu();	
 }
 
 populateBalls();
