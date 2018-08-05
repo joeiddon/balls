@@ -20,7 +20,7 @@ let mouse = {x: undefined, y: undefined, r: 30, ss: 20};
 let no_balls = 16;
 let radius = {min: 2, max: 32};
 let velocity = 128;
-let gravity = 9.8;
+let gravity = 64;
 let cor = 1;
 let collisions = true;
 let tracing = false;
@@ -44,7 +44,41 @@ let spawn;
 let time_delta_s;
 let last_time_ms = -1;
 
+
+/******************
+      MAIN LOOP
+*******************/
+
+function update(time_ms){
+    time_delta_s = last_time_ms == -1 ? 0 : (time_ms - last_time_ms) / 1000;
+    last_time_ms = time_ms;
+
+    //start by introducing gravity
+    apply_gravity();
+
+    //check and modify velocities if any collisions
+    wall_collisions();
+    ball_collisions();
+    bollard_collisions();
+
+    //update the balls' positions based on their velocities
+    update_ball_positions();
+
+    //clear and draw balls and menu
+    clear_screen();
+
+    draw_balls()
+    //draw menu (either the button to enter menu or the 
+    draw_menu();
+
+    requestAnimationFrame(update);
+}
+
 fit_to_screen();
+
+populate_balls();
+
+requestAnimationFrame(update);
 
 /*******************
   EVENT LISTENERS
@@ -98,6 +132,189 @@ function key_press(e){
    UTILITY FUNCS
 ******************/
 
+function populate_balls(){
+    for (let b = 0; b < no_balls; b++){
+        balls.push({x:  rand_num(spawn.x, spawn.x + spawn.w),
+                    y:  rand_num(spawn.y, spawn.y +  spawn.h),
+                    vx: rand_num(velocity * -1, velocity),
+                    vy: rand_num(velocity * -1, velocity),
+                    r: rand_num(radius.min, radius.max),
+                    c: colors[parseInt(rand_num(0, colors.length))]});
+    }
+}
+
+function draw_balls(){
+    //draw the balls
+    for (let b = 0; b < balls.length; b++){
+        let ball = balls[b];
+        draw_circle(ball.x, ball.y, ball.r, ball.c);
+    }
+    //draw bollards
+    for (let b = 0; b < bollards.length; b++){
+        let bollard = bollards[b];
+        draw_circle(bollard.x, bollard.y, bollard.r, 'rgba(40, 220, 255, 0.6)');
+    }
+    //draw mouse position
+    draw_circle(mouse.x, mouse.y, mouse.r > 0 ? mouse.r : 0, 'rgba(255, 70, 90, 0.8');
+}
+
+//adds the ball's velocities to their coordinates and applies gravity
+function update_ball_positions(){
+    for (let b = 0; b < balls.length; b++){
+        let ball = balls[b];
+        ball.x += time_delta_s * ball.vx;
+        ball.y += time_delta_s * ball.vy;
+    }
+}
+
+//adds the gravity acceleration to the ball's vertical velocities
+function apply_gravity(){
+    for (let b = 0; b < balls.length; b++){
+        balls[b].vy += gravity * time_delta_s;
+    }
+}
+
+function wall_collisions(){
+    for (let i = 0; i < balls.length; i++){
+        let ball = balls[i];
+        let nx = ball.x + ball.vx * time_delta_s;
+        let ny = ball.y + ball.vy * time_delta_s;
+        if (nx - ball.r < 0  || nx + ball.r > cnvs.width){
+            ball.vx *= -1 * cor;
+            //move ball over wall so on next update, it as if it has bounced
+            //can't use `nx` here as doesn't include `cor`
+            ball.x = ball.x + ball.vx * time_delta_s;
+        }
+        if (ny - ball.r < 0 || ny + ball.r > cnvs.height){
+            ball.vy *= -1 * cor;
+            ball.y = ball.y + ball.vy * time_delta_s;
+        }
+    }
+}
+
+function ball_collisions(){
+    if (!collisions) return
+    for (let b1 = 0; b1 < balls.length; b1++ ){
+        for (let b2 = b1 + 1;  b2 < balls.length; b2++){
+            let next_b1 = {x: balls[b1].x + balls[b1].vx * time_delta_s,
+                           y: balls[b1].y + balls[b1].vy * time_delta_s,
+                           r: balls[b1].r};
+            let next_b2 = {x: balls[b2].x + balls[b2].vx * time_delta_s,
+                           y: balls[b2].y + balls[b2].vy * time_delta_s,
+                           r: balls[b2].r};
+            if (overlap(next_b1, next_b2)){
+                //asignning deltaX and deltaY for the positions of the balls
+                let deltaX = balls[b2].x - balls[b1].x;
+                let deltaY = balls[b2].y - balls[b1].y;
+
+                //initialising the  current normal and tangental velocities to the collision for each ball
+                let normVel1 = normal_vel(deltaX, deltaY, b1);
+                let normVel2 = normal_vel(deltaX, deltaY, b2);
+                let tangVel1 = tangent_vel(deltaX, deltaY, b1);
+                let tangVel2 = tangent_vel(deltaX, deltaY, b2);
+
+                //applying the 'momentum' function to these velocities to work out the post collison velocities
+                let xNormVels = momentum(normVel1.x, normVel2.x, Math.pow(balls[b1].r, 2), Math.pow(balls[b2].r, 2));
+                let yNormVels = momentum(normVel1.y, normVel2.y, Math.pow(balls[b1].r, 2), Math.pow(balls[b2].r, 2));
+
+                //reassigning the post collision velocities
+                normVel1.x = xNormVels[0] * cor;
+                normVel2.x = xNormVels[1] * cor;
+                normVel1.y = yNormVels[0] * cor;
+                normVel2.y = yNormVels[1] * cor;
+
+                //setting the actual velocities of the balls to the sum of the normal and tangental velocities
+                balls[b1].vx = normVel1.x + tangVel1.x;
+                balls[b1].vy = normVel1.y + tangVel1.y;
+
+                balls[b2].vx = normVel2.x + tangVel2.x;
+                balls[b2].vy = normVel2.y + tangVel2.y;
+            }
+        }
+    }
+}
+
+function normal_vel(deltaX, deltaY, b){
+     let k = (-1 / (deltaY * deltaY + deltaX * deltaX)) * ((-1 * deltaX * balls[b].vx) - (deltaY * balls[b].vy));
+     let nX = k * deltaX;
+     let nY = k * deltaY;
+     return {x: nX, y: nY};
+}
+
+function tangent_vel(deltaX, deltaY, b){
+     let k = (-1 / (deltaY * deltaY + deltaX * deltaX)) * ((deltaY * balls[b].vx) - (deltaX * balls[b].vy));
+     let tX = k * -1 * deltaY;
+     let tY = k * deltaX;
+     return {x: tX, y: tY};
+}
+
+
+function bollard_collisions(){
+    for (let bol = 0; bol < bollards.length; bol++){
+        for (let bal = 0; bal < balls.length; bal++){
+            let bollard = bollards[bol];
+            let ball = balls[bal];
+            let next_ball = {x: ball.x + ball.vx * time_delta_s,
+                             y: ball.y + ball.vy * time_delta_s,
+                             r: ball.r}
+            if (overlap(ball, bollard)){
+                //asignning deltaX and deltaY for the positions of the balls
+                let deltaX = ball.x - bollard.x;
+                let deltaY = ball.y - bollard.y;
+
+                //initialising the  current normal and tangental velocities to the collision for each ball
+                let normVel2 = normal_vel(deltaX, deltaY, bal);
+                let tangVel2 = tangent_vel(deltaX, deltaY, bal);
+
+                //applying the 'momentum' function to these velocities to work out the post colliison velocities
+                let xNormVels = momentum(0, normVel2.x, 100000000000000, ball.r);
+                let yNormVels = momentum(0, normVel2.y, 100000000000000, ball.r);
+
+                //reassigning the post collision velocities
+                normVel2.x = xNormVels[1] * cor;
+                normVel2.y = yNormVels[1] * cor;
+
+                //setting the actual velocities of the balls to the sum of the normal and tangental velocities  
+                ball.vx = normVel2.x + tangVel2.x;
+                ball.vy = normVel2.y + tangVel2.y;
+            }
+        }
+    }
+}
+
+function restart(){
+    menu = false;
+    ctx.clearRect(0, 0, cnvs.width, cnvs.height);
+    balls = [];
+    populate_balls();
+}
+
+function draw_menu(){
+    if (menu){
+        for (let r = 0; r < menuRows.length; r++){
+            let font_sz = cnvs.height / 25;
+            let row = menuRows[r];
+            let row_height = (cnvs.height - (menuRows.length + 1) * menuPadding) / menuRows.length;
+            ctx.fillStyle = 'rgba(255, 150, 114, 0.5)';
+            ctx.fillRect(menuPadding, menuPadding * (r+1) + r * row_height, cnvs.width - 2 * menuPadding, row_height);
+            ctx.font = font_sz.toString() + 'px courier';
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.textAlign = 'end';
+            ctx.fillText(row.tag + ' : ', cnvs.width / 2, menuPadding + font_sz / 4 + (menuPadding + row_height) * r + row_height / 2);
+            ctx.textAlign = 'start';
+            ctx.fillText(row.val().toString() + row.unit, cnvs.width / 2, menuPadding + font_sz / 4 + (menuPadding + row_height) * r + row_height / 2);
+        }
+    } else {
+        ctx.fillStyle = 'rgba(255, 150, 114, 0.5)';
+        ctx.fillRect(menuButton.x, menuButton.y, menuButton.w, menuButton.h);
+        ctx.textAlign = 'center';
+        ctx.font = '20px courier';
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillText('menu', menuButton.x + menuButton.w / 2, menuButton.y + menuButton.h / 2 + 5);
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    }
+}
+
 //distance between two objects with x,y attrs.
 function dist(c1, c2){
     return ((c2.x - c1.x) ** 2 + (c2.y - c1.y) ** 2) ** 0.5;
@@ -149,214 +366,3 @@ function clear_screen(){
     if (tracing) return;
     ctx.clearRect(0, 0, cnvs.width, cnvs.height);
 }
-
-function populate_balls(){
-    for (let b = 0; b < no_balls; b++){
-        balls.push({x:  rand_num(spawn.x, spawn.x + spawn.w),
-                    y:  rand_num(spawn.y, spawn.y +  spawn.h),
-                    vx: rand_num(velocity * -1, velocity),
-                    vy: rand_num(velocity * -1, velocity),
-                    r: rand_num(radius.min, radius.max),
-                    c: colors[parseInt(rand_num(0, colors.length))]});
-    }
-}
-
-function draw_balls(){
-    //draw all balls
-    for (let b = 0; b < balls.length; b++){
-        let ball = balls[b];
-        draw_circle(ball.x, ball.y, ball.r, ball.c);
-    }
-    //draw bollards
-    for (let b = 0; b < bollards.length; b++){
-        let bollard = bollards[b];
-        draw_circle(bollard.x, bollard.y, bollard.r, 'rgba(40, 220, 255, 0.6)');
-    }
-    //draw mouse position
-    draw_circle(mouse.x, mouse.y, mouse.r > 0 ? mouse.r : 0, 'rgba(255, 70, 90, 0.8');
-}
-
-//adds the ball's velocities to their coordinates and applies gravity
-function update_ball_positions(){
-    for (let b = 0; b < balls.length; b++){
-        let ball = balls[b];
-        ball.x += time_delta_s * ball.vx;
-        ball.y += time_delta_s * ball.vy + 0.5 * gravity * time_delta_s;
-    }
-}
-
-//adds the gravity acceleration to the ball's vertical velocities
-function apply_gravity(){
-    for (let b = 0; b < balls.length; b++){
-        balls[b].vy += gravity * time_delta_s;
-    }
-}
-
-function wallCollisions(){
-    for (let i = 0; i < balls.length; i++){
-        let ball = balls[i];
-        let nx = ball.x + ball.vx * time_delta_s;
-        let ny = ball.y + ball.vy * time_delta_s;
-        if (nx - ball.r < 0  || nx + ball.r > cnvs.width){
-            ball.x = nx; //move ball over wall so on next update, it as if it has bounced
-            ball.vx *= -1 * cor;
-        }
-        if (ny - ball.r < 0 || ny + ball.r > cnvs.height){
-            ball.y = ny;
-            ball.vy *= -1 * cor;
-        }
-    }
-}
-
-function ballCollisions(){
-    if (!collisions) return
-    for (let b1 = 0; b1 < balls.length; b1++ ){
-        for (let b2 = b1 + 1;  b2 < balls.length; b2++){
-            let next_b1 = {x: balls[b1].x + balls[b1].vx * time_delta_s,
-                           y: balls[b1].y + balls[b1].vy * time_delta_s,
-                           r: balls[b1].r};
-            let next_b2 = {x: balls[b2].x + balls[b2].vx * time_delta_s,
-                           y: balls[b2].y + balls[b2].vy * time_delta_s,
-                           r: balls[b2].r};
-            if (overlap(next_b1, next_b2)){
-                //asignning deltaX and deltaY for the positions of the balls
-                let deltaX = balls[b2].x - balls[b1].x;
-                let deltaY = balls[b2].y - balls[b1].y;
-
-                //initialising the  current normal and tangental velocities to the collision for each ball
-                let normVel1 = normalVel(deltaX, deltaY, b1);
-                let normVel2 = normalVel(deltaX, deltaY, b2);
-                let tangVel1 = tangentVel(deltaX, deltaY, b1);
-                let tangVel2 = tangentVel(deltaX, deltaY, b2);
-
-                //applying the 'momentum' function to these velocities to work out the post collison velocities
-                let xNormVels = momentum(normVel1.x, normVel2.x, Math.pow(balls[b1].r, 2), Math.pow(balls[b2].r, 2));
-                let yNormVels = momentum(normVel1.y, normVel2.y, Math.pow(balls[b1].r, 2), Math.pow(balls[b2].r, 2));
-
-                //reassigning the post collision velocities
-                normVel1.x = xNormVels[0] * cor;
-                normVel2.x = xNormVels[1] * cor;
-                normVel1.y = yNormVels[0] * cor;
-                normVel2.y = yNormVels[1] * cor;
-
-                //setting the actual velocities of the balls to the sum of the normal and tangental velocities
-                balls[b1].vx = normVel1.x + tangVel1.x;
-                balls[b1].vy = normVel1.y + tangVel1.y;
-
-                balls[b2].vx = normVel2.x + tangVel2.x;
-                balls[b2].vy = normVel2.y + tangVel2.y;
-            }
-        }
-    }
-}
-
-function normalVel(deltaX, deltaY, b){
-     let k = (-1 / (deltaY * deltaY + deltaX * deltaX)) * ((-1 * deltaX * balls[b].vx) - (deltaY * balls[b].vy));
-     let nX = k * deltaX;
-     let nY = k * deltaY;
-     return {x: nX, y: nY};
-}
-
-function tangentVel(deltaX, deltaY, b){
-     let k = (-1 / (deltaY * deltaY + deltaX * deltaX)) * ((deltaY * balls[b].vx) - (deltaX * balls[b].vy));
-     let tX = k * -1 * deltaY;
-     let tY = k * deltaX;
-     return {x: tX, y: tY};
-}
-
-
-function bollardCollisions(){
-    for (let bol = 0; bol < bollards.length; bol++){
-        for (let bal = 0; bal < balls.length; bal++){
-            let bollard = bollards[bol];
-            let ball = balls[bal];
-            let next_ball = {x: ball.x + ball.vx * time_delta_s,
-                             y: ball.y + ball.vy * time_delta_s,
-                             r: ball.r}
-            if (overlap(ball, bollard)){
-                //asignning deltaX and deltaY for the positions of the balls
-                let deltaX = ball.x - bollard.x;
-                let deltaY = ball.y - bollard.y;
-
-                //initialising the  current normal and tangental velocities to the collision for each ball
-                let normVel2 = normalVel(deltaX, deltaY, bal);
-                let tangVel2 = tangentVel(deltaX, deltaY, bal);
-
-                //applying the 'momentum' function to these velocities to work out the post colliison velocities
-                let xNormVels = momentum(0, normVel2.x, 100000000000000, ball.r);
-                let yNormVels = momentum(0, normVel2.y, 100000000000000, ball.r);
-
-                //reassigning the post collision velocities
-                normVel2.x = xNormVels[1] * cor;
-                normVel2.y = yNormVels[1] * cor;
-
-                //setting the actual velocities of the balls to the sum of the normal and tangental velocities  
-                ball.vx = normVel2.x + tangVel2.x;
-                ball.vy = normVel2.y + tangVel2.y;
-            }
-        }
-    }
-}
-
-function restart(){
-    menu = false;
-    ctx.clearRect(0,0,cnvs.width,cnvs.height);
-    balls = [];
-    populate_balls();
-}
-
-function draw_menu(){
-    if (menu){
-        for (let r = 0; r < menuRows.length; r++){
-            let font_sz = cnvs.height / 25;
-            let row = menuRows[r];
-            let row_height = (cnvs.height - (menuRows.length + 1) * menuPadding) / menuRows.length;
-            ctx.fillStyle = 'rgba(255, 150, 114, 0.5)';
-            ctx.fillRect(menuPadding, menuPadding * (r+1) + r * row_height, cnvs.width - 2 * menuPadding, row_height);
-            ctx.font = font_sz.toString() + 'px courier';
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.textAlign = 'end';
-            ctx.fillText(row.tag + ' : ', cnvs.width / 2, menuPadding + font_sz / 4 + (menuPadding + row_height) * r + row_height / 2);
-            ctx.textAlign = 'start';
-            ctx.fillText(row.val().toString() + row.unit, cnvs.width / 2, menuPadding + font_sz / 4 + (menuPadding + row_height) * r + row_height / 2);
-        }
-    } else {
-        ctx.fillStyle = 'rgba(255, 150, 114, 0.5)';
-        ctx.fillRect(menuButton.x, menuButton.y, menuButton.w, menuButton.h);
-        ctx.textAlign = 'center';
-        ctx.font = '20px courier';
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillText('menu', menuButton.x + menuButton.w / 2, menuButton.y + menuButton.h / 2 + 5);
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    }
-}
-
-function update(time_ms){
-    time_delta_s = last_time_ms == -1 ? 0 : (time_ms - last_time_ms) / 1000;
-    last_time_ms = time_ms;
-
-    //start by introducing gravity
-    apply_gravity();
-
-    //check and modify velocities if any collisions
-    wallCollisions();
-    ballCollisions();
-    bollardCollisions();
-
-    //update the balls' positions based on their velocities
-    update_ball_positions();
-
-
-    //clear and draw balls and menu
-    clear_screen();
-
-    draw_balls()
-    //draw menu (either the button to enter menu or the 
-    draw_menu();
-
-    requestAnimationFrame(update);
-}
-
-populate_balls();
-
-requestAnimationFrame(update);
