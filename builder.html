@@ -1,0 +1,180 @@
+<html>
+<head>
+<style>
+canvas {
+    background-color: #000;
+    float: right;
+}
+</style>
+</head>
+<body>
+<canvas id='cnvs'></canvas>
+<h1>Balls world builder</h1>
+<h3>Instuctions:</h3>
+<ol>
+<li>select placing mode below</li>
+<li>draw in the black canvas to the right</li>
+<li>if selected ball spawn area, then:
+<ol>
+<li>click and hold for top left corner</li>
+<li>drag to bottom right corner</li>
+<li>release to place</li>
+</ol>
+</li>
+<li>if selected bollard, then:
+<ol>
+<li>click for first corner</li>
+<li>click for second corner</li>
+<li>click for fourth edge</li>
+</ol>
+</li>
+</ol>
+<hr>
+<h3>Placing mode:</h3>
+<span>
+<input id='spawn_area_but' type='button' value='ball spawn area'></input>
+<input id='bollards_but' type='button' value='bollards_but'></input>
+</span>
+
+<script>
+'use strict';
+let cnvs = document.getElementById('cnvs');
+let ctx = cnvs.getContext('2d');
+
+let spawn_area_but = document.getElementById('spawn_area_but');
+let bollards_but = document.getElementById('bollards_but');
+
+set_button(spawn_area_but, 1);
+
+spawn_area_but.onclick = function(){
+    placing = 'spawn';
+    cnvs.removeEventListener('click', click_bollard);
+    cnvs.removeEventListener('mousemove', mouse_move_bollard);
+    bollard_first_corner = bollard_second_corner = 0;
+    cnvs.addEventListener('click', click_spawn);
+    set_button(spawn_area_but, 1);
+    set_button(bollards_but, 0);
+}
+
+bollards_but.onclick = function(){
+    placing = 'bollard';
+    cnvs.removeEventListener('click', click_spawn);
+    cnvs.removeEventListener('mousemove', mouse_move_spawn);
+    spawn_top_left = 0;
+    cnvs.addEventListener('click', click_bollard);
+    set_button(bollards_but, 1);
+    set_button(spawn_area_but, 0);
+}
+
+function set_button(button, state){
+    button.style.borderStyle = state ? 'inset':'';
+}
+
+cnvs.width = innerWidth/2;
+cnvs.height = innerHeight/2;
+
+//array of array of points: [[{x,y},{x,y},...],...]
+let bollards = [];
+//array of objects with x,y,w,h,no_balls,min_radius,max_radius
+let spawn_areas = [];
+
+let placing = 'spawn'; //... or 'bollard'
+
+ctx.strokeStyle = '#f00';
+ctx.fillStyle = '#0f0';
+
+// draws all spawn_areas and bollards
+function draw(){
+    ctx.clearRect(0, 0, cnvs.width, cnvs.height);
+}
+
+// mouse event listeners for placing spawn
+cnvs.addEventListener('click', click_spawn);
+
+let spawn_top_left;
+
+function click_spawn(e){
+    if (spawn_top_left){
+        spawn_areas.push({
+            x: spawn_top_left.x,
+            y: spawn_top_left.y,
+            w: e.offsetX - spawn_top_left.x,
+            h: e.offsetY - spawn_top_left.y,
+            no_balls: 10,
+            min_radius: 10,
+            max_radius: 10,
+        });
+        spawn_top_left = 0;
+        cnvs.removeEventListener('mousemove', mouse_move_spawn);
+    } else {
+        spawn_top_left = {x: e.offsetX, y: e.offsetY};
+        cnvs.addEventListener('mousemove', mouse_move_spawn);
+    }
+}
+
+function mouse_move_spawn(e){
+    draw();
+    ctx.strokeRect(spawn_top_left.x,
+                   spawn_top_left.y,
+                   e.offsetX - spawn_top_left.x,
+                   e.offsetY - spawn_top_left.y);
+}
+
+// mouse event listeners for placing bollard
+let bollard_first_corner;
+let bollard_second_corner;
+
+function click_bollard(e){
+    let this_corner = {x: e.offsetX, y: e.offsetY};
+    if (bollard_first_corner){
+        if (bollard_second_corner){
+            console.log('place');
+            bollards.push([
+                {x: 1, y: 1},
+                {x: 1, y: 1},
+                {x: 1, y: 1},
+                {x: 1, y: 1}
+            ]);
+            bollard_first_corner = bollard_second_corner = 0;
+            cnvs.removeEventListener('mousemove', mouse_move_bollard);
+        } else {
+            bollard_second_corner = this_corner;
+        }
+    } else {
+        bollard_first_corner = this_corner;
+        cnvs.addEventListener('mousemove', mouse_move_bollard);
+    }
+}
+
+function mouse_move_bollard(e){
+    draw();
+    let this_point = {x: e.offsetX, y: e.offsetY};
+    if (bollard_second_corner){
+        //see paper for calculations for third and fourth corners
+        let m = (bollard_second_corner.y - bollard_first_corner.y) / (bollard_second_corner.x - bollard_first_corner.x);
+        let ax = (bollard_first_corner.y - this_point.y + this_point.x * m + bollard_first_corner.x / m) / (m + 1/m);
+        let ay = this_point.y + m * (ax - this_point.x);
+        let bx = (bollard_second_corner.y - this_point.y + this_point.x * m + bollard_second_corner.x / m) / (m + 1/m);
+        let by = this_point.y + m * (bx - this_point.x);
+
+        fill_polygon([bollard_first_corner,
+                      bollard_second_corner,
+                      {x: bx, y: by},
+                      {x: ax, y: ay}]);
+    } else{
+        fill_polygon([bollard_first_corner, this_point]);
+    }
+}
+
+function fill_polygon(points){
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++){
+        ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.stroke();
+    ctx.fill();
+}
+
+</script>
+</body>
