@@ -246,7 +246,7 @@ function bollard_collisions(){
                             let dx = cs[1].x - cs[0].x;
                             let dy = cs[1].y - cs[0].y;
                             let a = (dx*balls[i].vx+dy*balls[i].vy)/(dx*dx+dy*dy);
-                            let b = (dx*balls[i].vx-dx*balls[i].vy)/(dx*dx+dy*dy);
+                            let b = (dy*balls[i].vx-dx*balls[i].vy)/(dx*dx+dy*dy);
                             let vel_tang = {x: dx * a, y:  dy * a};
                             let vel_norm = {x: dy * b, y: -dx * b};
                             //reverse normal component
