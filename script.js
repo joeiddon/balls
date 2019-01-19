@@ -72,7 +72,7 @@ requestAnimationFrame(update);
 ******************/
 
 function load_url_params(){
-    let data = JSON.parse(decodeURIComponent(location.href.split('?')[1]));
+    let data = JSON.parse(decodeURIComponent(location.href.split('?data=')[1]));
     let spawn_areas = data.spawn_areas;
     bollards = data.bollards;
     tracing = data.tracing; collisions = data.collisions;

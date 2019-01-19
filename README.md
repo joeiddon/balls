@@ -11,7 +11,7 @@ It may be concieved that these are easy features to implement and to a rudimenta
 
 ### Usage
 
-The file `builder.html` allows you to [create your own simulation](https://joeiddon.github.io/builder) through some basic settings and the ability to place ball spawn areas and obstacles.
+The file `builder.html` allows you to [create your own simulation](https://joeiddon.github.io/balls/builder) through some basic settings and the ability to place ball spawn areas and obstacles.
 
 That page generates a link, which encodes those settings, to the simulator.
 

@@ -122,7 +122,7 @@ let max_vel_inpt       = document.getElementById('max_vel_inpt');
 let min_vel_inpt       = document.getElementById('min_vel_inpt');
 let vel_angle_inpt     = document.getElementById('vel_angle_inpt');
 
-cnvs.height = cnvs.width = innerHeight * 2 / 3;
+cnvs.height = cnvs.width = innerHeight*4/5;
 
 /*
  * TODO:
@@ -168,7 +168,7 @@ function update(){
                                gravity: parseInt(gravity_inpt.value),
                                cor: parseFloat(cor_inpt.value),
                                size: cnvs.width});
-    run_link.href = run_link.innerText = 'https://joeiddon.github.io/balls?'+encodeURIComponent(data);
+    run_link.href = run_link.innerText = 'https://joeiddon.github.io/balls?data='+encodeURIComponent(data);
 
 }
 
