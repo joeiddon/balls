@@ -26,7 +26,7 @@ let cor;
 let collisions;
 let tracing;
 let time_delta_s;
-let last_time_ms = -1;
+let last_time_ms;
 
 /* the simulation is done in the coordinate system of the bulder canvas,
  * but then in the draw_screen() function, coordinates are mapped back to
@@ -40,7 +40,7 @@ let builder_size;
 *******************/
 
 function update(time_ms){
-    time_delta_s = last_time_ms == -1 ? 0 : (time_ms - last_time_ms) / 1000;
+    time_delta_s = last_time_ms ? 0 : (time_ms - last_time_ms) / 1000;
     last_time_ms = time_ms;
 
     //start by introducing gravity
