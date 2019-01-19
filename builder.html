@@ -4,18 +4,38 @@
 canvas {
     background-color: #000;
     float: right;
+    cursor: crosshair;
+}
+input[type=number] {
+    width: 200px;
+}
+label {
+    display: inline-block;
+    text-align: right;
+    width: 100px;
+}
+a {
+    display: block;
+    width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: #ccc;
+    padding: 4px;
+    border-style
 }
 </style>
 </head>
 <body>
 <canvas id='cnvs'></canvas>
 <h1>Balls world builder</h1>
-<h3>Instuctions:</h3>
+<h3>Instuctions</h3>
 <ol>
+<li>adjust global options below</li>
 <li>select placing mode below</li>
-<li>draw in the black canvas to the right</li>
 <li>if selected ball spawn area, then:
 <ol>
+<li>adjust spawn settings [<strong>before</strong> placing]
 <li>click and hold for top left corner</li>
 <li>drag to bottom right corner</li>
 <li>release to place</li>
@@ -28,54 +48,96 @@ canvas {
 <li>click for fourth edge</li>
 </ol>
 </li>
+<li>repeats steps (1)-(4) till constructed</li>
+<li>run the simulation by clicking the link at the bottom</li>
+<em>you can copy or bookmark this link to revisit your simulation</em>
 </ol>
+
 <hr>
-<h3>Placing mode:</h3>
+<h3>Options</h3>
+<h4>Global</h4>
+<label>ball tracing?</label>
+<input id='tracing_check' type='checkbox' oninput='update();'></input>
+<br>
+<label>ball collisions?</label>
+<input id='collisions_check' checked=1 type='checkbox' oninput='update();'></input>
+<br>
+<label>gravity</label>
+<input type='number' id='gravity_inpt' value=0 oninput='update()'></input>pix/sec^2
+<br>
+<label>coefficient of restitution</label>
+<input type='number' id='cor_inpt' value=1 oninput='update();'></input>arb. unit
+<br>
+
+<h4>Placing Mode</h4>
 <span>
 <input id='spawn_area_but' type='button' value='ball spawn area'></input>
-<input id='bollards_but' type='button' value='bollards_but'></input>
+<input id='bollards_but' type='button' value='bollards'></input>
 </span>
+<hr>
+<div id='spawn_param_div'>
+<label>num balls</label>
+<input type='number' id='no_balls_inpt' value=1>balls
+<br>
+<label >max radius</label>
+<input type='number' id='max_radius_inpt' value=10></input>pix
+<br>
+<label>min radius</label>
+<input type='number' id='min_radius_inpt' value=10></input>pix
+<br>
+<label>max velocity</label>
+<input type='number' id='max_vel_inpt' value=0></input>pix/sec
+<br>
+<label>min velocity</label>
+<input type='number' id='min_vel_inpt' value=0></input>pix/sec
+<br>
+<label>velocity angle</label>
+<input type='number' id='vel_angle_inpt' value=-1></input>°
+<em>[if this is -1 then random angle]</em>
+<hr>
+</div>
+
+<h3>Run it!</h3>
+<a id='run_link' target='_blank'></a>
 
 <script>
 'use strict';
 let cnvs = document.getElementById('cnvs');
 let ctx = cnvs.getContext('2d');
 
-let spawn_area_but = document.getElementById('spawn_area_but');
-let bollards_but = document.getElementById('bollards_but');
+let run_link = document.getElementById('run_link');
 
-set_button(spawn_area_but, 1);
+//lots of DOM elements for options to get... (should've made func :/)
+let tracing_check      = document.getElementById('tracing_check');
+let collisions_check   = document.getElementById('collisions_check');
+let gravity_inpt       = document.getElementById('gravity_inpt');
+let cor_inpt           = document.getElementById('cor_inpt');
+let spawn_param_div    = document.getElementById('spawn_param_div');
+let spawn_area_but     = document.getElementById('spawn_area_but');
+let bollards_but       = document.getElementById('bollards_but');
+let no_balls_inpt      = document.getElementById('no_balls_inpt');
+let max_radius_inpt    = document.getElementById('max_radius_inpt');
+let min_radius_inpt    = document.getElementById('min_radius_inpt');
+let max_vel_inpt       = document.getElementById('max_vel_inpt');
+let min_vel_inpt       = document.getElementById('min_vel_inpt');
+let vel_angle_inpt     = document.getElementById('vel_angle_inpt');
 
-spawn_area_but.onclick = function(){
-    placing = 'spawn';
-    cnvs.removeEventListener('click', click_bollard);
-    cnvs.removeEventListener('mousemove', mouse_move_bollard);
-    bollard_first_corner = bollard_second_corner = 0;
-    cnvs.addEventListener('click', click_spawn);
-    set_button(spawn_area_but, 1);
-    set_button(bollards_but, 0);
-}
+cnvs.height = cnvs.width = innerHeight * 2 / 3;
 
-bollards_but.onclick = function(){
-    placing = 'bollard';
-    cnvs.removeEventListener('click', click_spawn);
-    cnvs.removeEventListener('mousemove', mouse_move_spawn);
-    spawn_top_left = 0;
-    cnvs.addEventListener('click', click_bollard);
-    set_button(bollards_but, 1);
-    set_button(spawn_area_but, 0);
-}
+/*
+ * TODO:
+ * add ability to send a description, title etc. to simulation page
+ */
 
-function set_button(button, state){
-    button.style.borderStyle = state ? 'inset':'';
-}
-
-cnvs.width = innerWidth/2;
-cnvs.height = innerHeight/2;
-
-//array of array of points: [[{x,y},{x,y},...],...]
+/*
+ * bollards is array of objects, each have a 'type' property:
+ * 'type' | other properties
+ * =========================
+ * rect   | points: [[{x,y},{x,y},...],...]
+ * circle | x: x-coord, y: y-coord, r: radius  //// <--- not implemented yet (not sure will)
+ */
 let bollards = [];
-//array of objects with x,y,w,h,no_balls,min_radius,max_radius
+//array of objects with x,y,w,h,no_balls,min_radius,max_radius,min_vel,max_vel,vel_angle
 let spawn_areas = [];
 
 let placing = 'spawn'; //... or 'bollard'
@@ -83,10 +145,35 @@ let placing = 'spawn'; //... or 'bollard'
 ctx.strokeStyle = '#f00';
 ctx.fillStyle = '#0f0';
 
-// draws all spawn_areas and bollards
-function draw(){
+//updates all spawn_areas and bollards in canvas and updates link
+function update(){
     ctx.clearRect(0, 0, cnvs.width, cnvs.height);
+    for (let bollard of bollards){
+        switch (bollard.type){
+            case 'rect':
+                fill_polygon(bollard.points)
+                break;
+            case 'circle':
+                //not implemented yet
+                break;
+        }
+    }
+    for (let spawn of spawn_areas){
+        ctx.strokeRect(spawn.x, spawn.y, spawn.w, spawn.h);
+    }
+    let data = JSON.stringify({bollards: bollards,
+                               spawn_areas: spawn_areas,
+                               tracing: tracing_check.checked,
+                               collisions: collisions_check.checked,
+                               gravity: parseInt(gravity_inpt.value),
+                               cor: parseFloat(cor_inpt.value),
+                               size: cnvs.width});
+    run_link.href = run_link.innerText = 'https://joeiddon.github.io/balls?'+encodeURIComponent(data);
+
 }
+
+// call update once to set initial run_link (<a> tag)
+update();
 
 // mouse event listeners for placing spawn
 cnvs.addEventListener('click', click_spawn);
@@ -100,10 +187,14 @@ function click_spawn(e){
             y: spawn_top_left.y,
             w: e.offsetX - spawn_top_left.x,
             h: e.offsetY - spawn_top_left.y,
-            no_balls: 10,
-            min_radius: 10,
-            max_radius: 10,
+            no_balls: parseInt(no_balls_inpt.value),
+            min_radius: parseInt(min_radius_inpt.value),
+            max_radius: parseInt(max_radius_inpt.value),
+            min_vel: parseInt(min_vel_inpt.value),
+            max_vel: parseInt(max_vel_inpt.value),
+            vel_angle: parseInt(vel_angle_inpt.value)
         });
+        update();
         spawn_top_left = 0;
         cnvs.removeEventListener('mousemove', mouse_move_spawn);
     } else {
@@ -113,7 +204,7 @@ function click_spawn(e){
 }
 
 function mouse_move_spawn(e){
-    draw();
+    update();
     ctx.strokeRect(spawn_top_left.x,
                    spawn_top_left.y,
                    e.offsetX - spawn_top_left.x,
@@ -128,13 +219,17 @@ function click_bollard(e){
     let this_corner = {x: e.offsetX, y: e.offsetY};
     if (bollard_first_corner){
         if (bollard_second_corner){
-            console.log('place');
-            bollards.push([
-                {x: 1, y: 1},
-                {x: 1, y: 1},
-                {x: 1, y: 1},
-                {x: 1, y: 1}
-            ]);
+            let corners = other_corners_of_rect(bollard_first_corner,
+                                                bollard_second_corner,
+                                                this_corner);
+            bollards.push({
+                type: 'rect',
+                points: [bollard_first_corner,
+                         bollard_second_corner,
+                         corners[0],
+                         corners[1]]
+            });
+            update();
             bollard_first_corner = bollard_second_corner = 0;
             cnvs.removeEventListener('mousemove', mouse_move_bollard);
         } else {
@@ -146,21 +241,26 @@ function click_bollard(e){
     }
 }
 
+function other_corners_of_rect(c1, c2, p){
+    //calculates corners 3 and 4 from a point on the fourth edge
+    //see paper for calculations for third and fourth corners
+    let m = (c2.y - c1.y) / (c2.x - c1.x);
+    let ax = (c2.y - p.y + p.x * m + c2.x / m) / (m + 1/m);
+    let ay = p.y + m * (ax - p.x);
+    let bx = (c1.y - p.y + p.x * m + c1.x / m) / (m + 1/m);
+    let by = p.y + m * (bx - p.x);
+    return [{x: ax, y: ay}, {x: bx, y: by}];
+}
+
+
 function mouse_move_bollard(e){
-    draw();
+    update();
     let this_point = {x: e.offsetX, y: e.offsetY};
     if (bollard_second_corner){
-        //see paper for calculations for third and fourth corners
-        let m = (bollard_second_corner.y - bollard_first_corner.y) / (bollard_second_corner.x - bollard_first_corner.x);
-        let ax = (bollard_first_corner.y - this_point.y + this_point.x * m + bollard_first_corner.x / m) / (m + 1/m);
-        let ay = this_point.y + m * (ax - this_point.x);
-        let bx = (bollard_second_corner.y - this_point.y + this_point.x * m + bollard_second_corner.x / m) / (m + 1/m);
-        let by = this_point.y + m * (bx - this_point.x);
-
-        fill_polygon([bollard_first_corner,
-                      bollard_second_corner,
-                      {x: bx, y: by},
-                      {x: ax, y: ay}]);
+        let corners = other_corners_of_rect(bollard_first_corner,
+                                            bollard_second_corner,
+                                            this_point);
+        fill_polygon([bollard_first_corner, bollard_second_corner, corners[0], corners[1]]);
     } else{
         fill_polygon([bollard_first_corner, this_point]);
     }
@@ -176,5 +276,37 @@ function fill_polygon(points){
     ctx.fill();
 }
 
+set_button(spawn_area_but, 1);
+
+spawn_area_but.onclick = function(){
+    placing = 'spawn';
+    cnvs.removeEventListener('click', click_bollard);
+    cnvs.removeEventListener('mousemove', mouse_move_bollard);
+    bollard_first_corner = bollard_second_corner = 0;
+    cnvs.addEventListener('click', click_spawn);
+    set_button(spawn_area_but, 1);
+    set_button(bollards_but, 0);
+    spawn_param_div.style.display = 'block';
+}
+
+bollards_but.onclick = function(){
+    placing = 'bollard';
+    cnvs.removeEventListener('click', click_spawn);
+    cnvs.removeEventListener('mousemove', mouse_move_spawn);
+    spawn_top_left = 0;
+    cnvs.addEventListener('click', click_bollard);
+    set_button(bollards_but, 1);
+    set_button(spawn_area_but, 0);
+    spawn_param_div.style.display = 'none';
+}
+
+function set_button(button, state){
+    button.style.borderStyle = state ? 'inset':'';
+}
+
+let fit_x_coord = x => x/cnvs.width*100;
+let fit_y_coord = y => y/cnvs.height*100;
+
 </script>
 </body>
+</html>
