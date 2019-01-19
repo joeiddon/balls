@@ -1,10 +1,16 @@
 'use strict';
 
 /*
+ * COPYRIGHT Joe Iddon
+ *
+ * https://joeiddon.github.io/projects/javascript/balls
+ * https://github.com/joeiddon/balls
+ *
  * TODO:
  * - coefficient of restitution (not in right places and not at all in bollards)
  * - floor behaviour - balls phase through after a while...
- *
+ * - bollard behaviour is dodgy
+ * - neaten the code in general
  */
 
 let cnvs = document.getElementById('cnvs');
