@@ -40,7 +40,7 @@ let builder_size;
 *******************/
 
 function update(time_ms){
-    time_delta_s = last_time_ms ? 0 : (time_ms - last_time_ms) / 1000;
+    time_delta_s = last_time_ms ? (time_ms - last_time_ms) / 1000 : 0;
     last_time_ms = time_ms;
 
     //start by introducing gravity
