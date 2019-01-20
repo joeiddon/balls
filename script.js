@@ -37,6 +37,7 @@ let last_time_ms;
 /* the simulation is done in the coordinate system of the bulder canvas,
  * but then in the draw_screen() function, coordinates are mapped back to
  * this canvases coordinate system
+ * TODO: ^ change this to a 512x512 canvas and scale with CSS
  */
 let builder_size;
 
