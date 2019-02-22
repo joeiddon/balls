@@ -343,7 +343,7 @@ function momentum(u1, u2, m1, m2){
 //draws a circle on the main canvas
 function draw_circle(x, y, radius, color){
     //color = ('0' + (x / cnvs.width) * 0xff).toString(16).substr(-2).repeat(3);
-    ctx.beginPath(x, y);
+    ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
